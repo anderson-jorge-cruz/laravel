@@ -20,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configModels();
+    }
+
+    public function configModels(): void
+    {
         Model::unguard();
     }
 }

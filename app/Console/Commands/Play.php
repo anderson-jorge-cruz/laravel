@@ -2,7 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Brain\Integration\Tasks\ExportOrdersTask;
+use App\Brain\Integration\Processes\IntegrationProcess;
+use App\Models\IntegrationConfig;
 use Illuminate\Console\Command;
 
 class Play extends Command
@@ -26,6 +27,9 @@ class Play extends Command
      */
     public function handle()
     {
-        ExportOrdersTask::dispatch();
+        $integrationConfig = IntegrationConfig::query()->first();
+        IntegrationProcess::dispatch([
+            'integrationConfig' => $integrationConfig,
+        ]);
     }
 }
