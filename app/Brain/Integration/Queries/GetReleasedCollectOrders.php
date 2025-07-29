@@ -8,6 +8,7 @@ use App\Models\IntegrationConfig;
 use App\Models\Silt\VT_ACOMPANHAMENTOSAIDANF;
 use Brain\Query;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use stdClass;
 
 class GetReleasedCollectOrders extends Query
@@ -22,6 +23,7 @@ class GetReleasedCollectOrders extends Query
     {
         $iddepositante = $this->integrationConfig->iddepositante;
         $client_name = $this->integrationConfig->client_name;
+        $client_document = $this->integrationConfig->client_doc;
 
         return VT_ACOMPANHAMENTOSAIDANF::query()
             ->selectRaw('
@@ -65,6 +67,11 @@ class GetReleasedCollectOrders extends Query
                     ->from('wmsprd.v_exportarembarquedet as ve')
                     ->where('ve.iddepositante', $iddepositante)
                     ->whereRaw("ve.dataliberacao >= TO_DATE('2025-07-18', 'YYYY-MM-DD')");
+            })
+            ->whereNotIn('vta.notafiscal', function ($query) use ($client_document) {
+                $query->select('my.invoice_number')
+                    ->from('wmsprd.mytracking as my')
+                    ->where('my.depositante', Str::remove(['.', '-', '/'], $client_document));
             })
             ->whereNotNull('vta.tituloromaneio')
             ->whereRaw("vta.tituloromaneio NOT LIKE '%INVENTÁRIO'")

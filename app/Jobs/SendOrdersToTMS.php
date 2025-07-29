@@ -2,57 +2,81 @@
 
 namespace App\Jobs;
 
+use App\Brain\Integration\Queries\GetAddressByDocument;
+use App\Brain\Integration\Queries\GetAddressByInvoiceId;
 use App\Models\IntegrationConfig;
+use App\Models\OrderExport;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 
 class SendOrdersToTMS implements ShouldQueue
 {
     use Queueable;
+
+    public stdClass $recipientAddress;
+
+    public stdClass $issuerAddress;
 
     /**
      * Create a new job instance.
      */
     public function __construct(
         public IntegrationConfig $integrationConfig,
-        public $order,
-        public $recipientAddress,
-        public $issuerAddress
-    ) {
-        $this->order = (array) $order; // Ensure order is an array
-    }
+        public stdClass $order,
+    ) {}
 
     /**
      * Execute the job.
      */
     public function handle(): void
     {
+        $this->recipientAddress = GetAddressByInvoiceId::run($this->order->idnotafiscal);
+        if (! $this->recipientAddress) {
+            Log::warning("No address found for invoice ID: {$this->order->idnotafiscal}");
+        }
+
+        $this->issuerAddress = GetAddressByDocument::run($this->order->cnpjemitente);
+        if (! $this->issuerAddress) {
+            Log::warning("No address found for entity document: {$this->order->cnpjemitente}");
+        }
+
         $decodedBody = json_decode($this->integrationConfig->body, true);
         // Dados da integração
         $decodedBody['entregas'][0]['cnpjCd'] = $this->integrationConfig->tms_cd_doc;
         $decodedBody['entregas'][0]['codCd'] = (string) $this->integrationConfig->tms_cd_id;
 
         // Dados do pedido ($order)
-        $decodedBody['entregas'][0]['numeroPedido'] = $this->order['numeropedido'] ?? '';
-        $decodedBody['entregas'][0]['dataPedido'] = $this->order['datapedido'] ?? '';
-        $decodedBody['entregas'][0]['numeroNfe'] = $this->order['numeronfe'] ?? '';
-        $decodedBody['entregas'][0]['valorNfe'] = $this->order['valornfe'] ?? '';
-        $decodedBody['entregas'][0]['serieNfe'] = $this->order['serie'] ?? '';
-        $decodedBody['entregas'][0]['volumeEntrega'] = $this->order['volumeentrega'] ?? '';
-        $decodedBody['entregas'][0]['pesoEntrega'] = $this->order['pesoentrega'] ?? '';
-        $decodedBody['entregas'][0]['qtdVolumes'] = $this->order['qtdvolumes'] ?? '';
-        $decodedBody['entregas'][0]['agrupadorRota'] = $this->order['coleta'] ?? '';
-        $decodedBody['entregas'][0]['obsEntrega'] = $this->order['tituloromaneio'] ?? '';
-        $decodedBody['entregas'][0]['valorEntrega'] = $this->order['valornfe'] ?? ''; // Supondo que seja igual ao valor da NFe
+        $decodedBody['entregas'][0]['numeroPedido'] = $this->order->numeropedido ?? '';
+        $decodedBody['entregas'][0]['dataPedido'] = $this->order->datapedido ?? '';
+        $decodedBody['entregas'][0]['numeroNfe'] = $this->order->numeronfe ?? '';
+        $decodedBody['entregas'][0]['valorNfe'] = $this->order->valornfe ?? '';
+        $decodedBody['entregas'][0]['serieNfe'] = $this->order->serie ?? '';
+        $decodedBody['entregas'][0]['volumeEntrega'] = $this->order->volumeentrega ?? '';
+        $decodedBody['entregas'][0]['pesoEntrega'] = $this->order->pesoentrega ?? '';
+        $decodedBody['entregas'][0]['qtdVolumes'] = $this->order->qtdvolumes ?? '';
+        $decodedBody['entregas'][0]['agrupadorRota'] = $this->order->coleta ?? '';
+        $decodedBody['entregas'][0]['obsEntrega'] = $this->order->tituloromaneio ?? '';
+        $decodedBody['entregas'][0]['valorEntrega'] = $this->order->valornfe ?? '';
+
+        // Dados de data esperada de embarque
+        $expectedBoardingDate = OrderExport::query()
+            ->select(['dataesperadaembarque', 'horaesperadaembarque'])
+            ->where('depositante', $this->order->depositante)
+            ->where('pedido', $this->order->numeropedido)
+            ->first();
+
+        $decodedBody['entregas'][0]['dataPrvEntIni'] = "{$expectedBoardingDate?->dataesperadaembarque} {$expectedBoardingDate?->horaesperadaembarque}";
 
         // Transportadora
-        $decodedBody['entregas'][0]['cnpjTransportadora'] = $this->order['cnpjtransportadora'] ?? '';
-        $decodedBody['entregas'][0]['nomeTransportadora'] = $this->order['nometransportadora'] ?? '';
+        $decodedBody['entregas'][0]['cnpjTransportadora'] = $this->order->cnpjtransportadora ?? '';
+        $decodedBody['entregas'][0]['nomeTransportadora'] = $this->order->nometransportadora ?? '';
 
         // Emitente (issuerAddress)
-        $decodedBody['entregas'][0]['cnpjCpfEmitente'] = $this->order['cnpjemitente'] ?? '';
-        $decodedBody['entregas'][0]['nomeEmitente'] = $this->order['emitente'] ?? '';
+        $decodedBody['entregas'][0]['cnpjCpfEmitente'] = $this->order->cnpjemitente ?? '';
+        $decodedBody['entregas'][0]['nomeEmitente'] = $this->order->emitente ?? '';
         $decodedBody['entregas'][0]['endEmitente'] = $this->issuerAddress->enddes ?? '';
         $decodedBody['entregas'][0]['numEmitente'] = $this->issuerAddress->numdes ?? '';
         $decodedBody['entregas'][0]['cplEmitente'] = $this->issuerAddress->cpldes ?? '';
@@ -72,11 +96,15 @@ class SendOrdersToTMS implements ShouldQueue
         $decodedBody['entregas'][0]['cepDes'] = $this->recipientAddress->cep ?? '';
         $decodedBody['entregas'][0]['nomeDes'] = $this->recipientAddress->nomedes ?? '';
 
-        // Remove campo indesejado
-        unset($decodedBody['entregas'][0]['id']);
+        // Configurações de roteirizador
+        $decodedBody['entregas'][0]['enviarRoteirizador'] = '1';
 
-        Log::info([
-            'decodedBody' => $decodedBody,
-        ]);
+        $response = Http::withHeaders([
+            'Content-type' => 'application/json',
+            'token' => $this->integrationConfig->test_token,
+        ])->withBody(json_encode($decodedBody))
+            ->post($this->integrationConfig->endpoint);
+
+        Log::info($response->body());
     }
 }

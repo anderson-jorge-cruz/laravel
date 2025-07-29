@@ -6,16 +6,22 @@ namespace App\Brain\Integration\Tasks;
 
 use App\Models\OrderExport;
 use Brain\Task;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Task ExportOrdersTask
+ *
+ * @property-read IntegrationConfig $integrationConfig
  */
-class ExportOrdersTask extends Task
+class ExportOrdersTask extends Task implements ShouldQueue
 {
     public function handle(): self
     {
-        $ordersInDatabase = OrderExport::query()->select('idromaneio')->pluck('idromaneio');
+        $ordersInDatabase = OrderExport::query()
+            ->select('idromaneio')
+            ->where('depositante', $this->integrationConfig->client_name)
+            ->pluck('idromaneio');
 
         $exportOrders = DB::connection('oracle')
             ->table('WMSPRD.VT_GERENCIADOREXPEDICAO v')
@@ -29,7 +35,7 @@ class ExportOrdersTask extends Task
                 'v.DEPOSITANTE',
             ])
             ->whereNotIn('IDROMANEIO', $ordersInDatabase)
-            ->whereLike('v.DEPOSITANTE', 'MUNICÍPIO DE SÃO JOSÉ DOS PINHAIS')
+            ->whereLike('v.DEPOSITANTE', $this->integrationConfig->client_name)
             ->whereNotNull('v.DATAESPERADAEMBARQUE')
             ->whereRaw("v.DTGERACAO >= TO_DATE('".date('Y-m-01')."', 'YYYY-MM-DD')")
             ->get();
