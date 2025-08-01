@@ -71,7 +71,8 @@ class GetReleasedCollectOrders extends Query
             ->whereNotIn('vta.notafiscal', function ($query) use ($client_document) {
                 $query->select('my.invoice_number')
                     ->from('wmsprd.mytracking as my')
-                    ->where('my.depositante', Str::remove(['.', '-', '/'], $client_document));
+                    ->where('my.depositante', Str::remove(['.', '-', '/'], $client_document))
+                    ->where('my.env', 'production');
             })
             ->whereNotNull('vta.tituloromaneio')
             ->whereRaw("vta.tituloromaneio NOT LIKE '%INVENTÁRIO'")

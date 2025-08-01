@@ -8,6 +8,7 @@ use App\Models\IntegrationConfig;
 use App\Models\OrderExport;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use stdClass;
@@ -104,6 +105,32 @@ class SendOrdersToTMS implements ShouldQueue
             'token' => $this->integrationConfig->test_token,
         ])->withBody(json_encode($decodedBody))
             ->post($this->integrationConfig->endpoint);
+
+        if ($response->failed() || json_decode($response->body())->entregas[0]->codMensagem == '2') {
+            Log::error("Failed to send order to TMS: {$response->status()} - {$response->body()}");
+
+            return;
+        }
+
+        if ($response->successful() && json_decode($response->body())->entregas[0]->codMensagem == '1') {
+            $id = DB::connection('oracle')->table('wmsprd.mytracking')->insertGetId([
+                'invoice_number' => $this->order->numeronfe,
+                'order_number' => $this->order->numeropedido,
+                'status_code' => $response->status(),
+                'warehouse' => $this->integrationConfig->tms_cd_id,
+                'depositante' => $this->order->depositante,
+                'coleta' => $this->order->coleta,
+                'env' => 'test',
+            ], 'id');
+
+            DB::connection('mysql')->table('mytracking')->insert([
+                'request_id' => $id,
+                'integration_id' => $this->integrationConfig->id,
+                'request_body' => json_encode($decodedBody),
+                'response_body' => $response->body(),
+                'sended_to' => $this->integrationConfig->test_token,
+            ]);
+        }
 
         Log::info($response->body());
     }
