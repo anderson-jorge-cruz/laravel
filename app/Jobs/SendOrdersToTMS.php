@@ -123,7 +123,7 @@ class SendOrdersToTMS implements ShouldQueue
                 'env' => 'test',
             ], 'id');
 
-            DB::connection('mysql')->table('mytracking')->insert([
+            DB::connection('mysql')->table('integradorsm.mytracking')->insert([
                 'request_id' => $id,
                 'integration_id' => $this->integrationConfig->id,
                 'request_body' => json_encode($decodedBody),
