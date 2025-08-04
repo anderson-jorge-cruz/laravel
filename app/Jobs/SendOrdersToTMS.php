@@ -102,7 +102,7 @@ class SendOrdersToTMS implements ShouldQueue
 
         $response = Http::withHeaders([
             'Content-type' => 'application/json',
-            'token' => $this->integrationConfig->test_token,
+            'token' => $this->integrationConfig->production_token,
         ])->withBody(json_encode($decodedBody))
             ->post($this->integrationConfig->endpoint);
 
