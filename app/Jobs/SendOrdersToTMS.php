@@ -11,6 +11,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use stdClass;
 
 class SendOrdersToTMS implements ShouldQueue
@@ -118,7 +119,7 @@ class SendOrdersToTMS implements ShouldQueue
                 'order_number' => $this->order->numeropedido,
                 'status_code' => $response->status(),
                 'warehouse' => $this->integrationConfig->tms_cd_id,
-                'depositante' => $this->order->depositante,
+                'depositante' => Str::remove(['.', '-', '/'], $this->order->cnpjdepositante),
                 'coleta' => $this->order->coleta,
                 'env' => 'production',
             ], 'id');
