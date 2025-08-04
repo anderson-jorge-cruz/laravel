@@ -120,7 +120,7 @@ class SendOrdersToTMS implements ShouldQueue
                 'warehouse' => $this->integrationConfig->tms_cd_id,
                 'depositante' => $this->order->depositante,
                 'coleta' => $this->order->coleta,
-                'env' => 'test',
+                'env' => 'production',
             ], 'id');
 
             DB::connection('mysql')->table('integradorsm.mytracking')->insert([
