@@ -36,6 +36,8 @@ class GetAddressByDocument extends Query
                 $query->select('IDENTIDADE')
                     ->from('WMSPRD.entidade as e2')
                     ->where('e2.cgc', $document)
+                    ->where('e2.ativo', 'S')
+                    ->where('e2.tipoentidade', 142)
                     ->first();
             })
             ->getQuery()
