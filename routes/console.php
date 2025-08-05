@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('model:prune --pretend')->daily();
 Schedule::command('app:integrate')->everyFiveMinutes();
+
+Schedule::command('telescope:prune --hours=48')->daily();
