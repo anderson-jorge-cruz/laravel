@@ -103,7 +103,7 @@ class SendOrdersToTMS implements ShouldQueue
 
         $response = Http::withHeaders([
             'token' => $this->integrationConfig->production_token,
-        ])->post($this->integrationConfig->endpoint, json_encode($decodedBody));
+        ])->post($this->integrationConfig->endpoint, $decodedBody);
 
         if ($response->failed() || json_decode($response->body())->entregas[0]->codMensagem == '2') {
             Log::error("Failed to send order to TMS: {$response->status()} - {$response->body()}");
