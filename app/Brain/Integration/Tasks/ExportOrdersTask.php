@@ -6,7 +6,6 @@ namespace App\Brain\Integration\Tasks;
 
 use App\Models\OrderExport;
 use Brain\Task;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -14,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  *
  * @property-read IntegrationConfig $integrationConfig
  */
-class ExportOrdersTask extends Task implements ShouldQueue
+class ExportOrdersTask extends Task
 {
     public function handle(): self
     {

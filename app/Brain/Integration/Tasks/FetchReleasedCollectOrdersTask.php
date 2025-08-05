@@ -7,7 +7,6 @@ namespace App\Brain\Integration\Tasks;
 use App\Brain\Integration\Queries\GetReleasedCollectOrders;
 use App\Jobs\SendOrdersToTMS;
 use Brain\Task;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -16,7 +15,7 @@ use Illuminate\Support\Facades\Log;
  * @property-read IntegrationConfig $integrationConfig
  * @property Collection $orders
  */
-class FetchReleasedCollectOrdersTask extends Task implements ShouldQueue
+class FetchReleasedCollectOrdersTask extends Task
 {
     public function handle(): self
     {

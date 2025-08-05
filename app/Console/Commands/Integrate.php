@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\RunIntegration;
+use App\Brain\Integration\Processes\IntegrationProcess;
 use App\Models\IntegrationConfig;
 use Illuminate\Console\Command;
 
@@ -28,7 +28,9 @@ class Integrate extends Command
     public function handle()
     {
         IntegrationConfig::all()->each(function ($integration) {
-            RunIntegration::dispatch($integration);
+            IntegrationProcess::dispatch([
+                'integrationConfig' => $integration,
+            ]);
         });
     }
 }

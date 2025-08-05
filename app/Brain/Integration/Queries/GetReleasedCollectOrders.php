@@ -19,7 +19,7 @@ class GetReleasedCollectOrders extends Query
         //
     }
 
-    public function handle(): Collection|stdClass
+    public function handle(): Collection|stdClass|string
     {
         $iddepositante = $this->integrationConfig->iddepositante;
         $client_name = $this->integrationConfig->client_name;
@@ -66,13 +66,13 @@ class GetReleasedCollectOrders extends Query
                 $query->selectRaw('DISTINCT ve.numpedido')
                     ->from('wmsprd.v_exportarembarquedet as ve')
                     ->where('ve.iddepositante', $iddepositante)
-                    ->whereRaw("ve.dataliberacao >= TO_DATE('2025-07-18', 'YYYY-MM-DD')");
+                    ->whereRaw("ve.dataliberacao >= TO_DATE('".date('Y-m-01')."', 'YYYY-MM-DD')");
             })
             ->whereNotIn('vta.notafiscal', function ($query) use ($client_document) {
+                $document = Str::remove(['.', '-', '/'], $client_document);
                 $query->select('my.invoice_number')
                     ->from('wmsprd.mytracking as my')
-                    ->where('my.depositante', Str::remove(['.', '-', '/'], $client_document))
-                    ->where('my.env', 'production');
+                    ->whereRaw("my.depositante = '$document'");
             })
             ->whereNotNull('vta.tituloromaneio')
             ->whereRaw("vta.tituloromaneio NOT LIKE '%INVENTÁRIO'")

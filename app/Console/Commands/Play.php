@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Brain\Integration\Processes\IntegrationProcess;
+use App\Brain\Integration\Queries\GetReleasedCollectOrders;
 use App\Models\IntegrationConfig;
 use Illuminate\Console\Command;
 
@@ -27,9 +27,10 @@ class Play extends Command
      */
     public function handle()
     {
-        $integrationConfig = IntegrationConfig::query()->first();
-        IntegrationProcess::dispatch([
-            'integrationConfig' => $integrationConfig,
-        ]);
+        $query = GetReleasedCollectOrders::run(
+            IntegrationConfig::find(1)
+        );
+
+        dd($query);
     }
 }

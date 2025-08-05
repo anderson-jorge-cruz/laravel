@@ -121,7 +121,6 @@ class SendOrdersToTMS implements ShouldQueue
                 'warehouse' => $this->integrationConfig->tms_cd_id,
                 'depositante' => Str::remove(['.', '-', '/'], $this->order->cnpjdepositante),
                 'coleta' => $this->order->coleta,
-                'env' => 'production',
             ], 'id');
 
             DB::connection('mysql')->table('integradorsm.mytracking')->insert([
@@ -129,10 +128,8 @@ class SendOrdersToTMS implements ShouldQueue
                 'integration_id' => $this->integrationConfig->id,
                 'request_body' => json_encode($decodedBody),
                 'response_body' => $response->body(),
-                'sended_to' => $this->integrationConfig->test_token,
+                'sended_to' => $this->integrationConfig->production_token,
             ]);
         }
-
-        Log::info($response->body());
     }
 }
