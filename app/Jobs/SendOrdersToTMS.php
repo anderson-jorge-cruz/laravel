@@ -6,6 +6,7 @@ use App\Brain\Integration\Queries\GetAddressByDocument;
 use App\Brain\Integration\Queries\GetAddressByInvoiceId;
 use App\Models\IntegrationConfig;
 use App\Models\OrderExport;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use stdClass;
 
-class SendOrdersToTMS implements ShouldQueue
+class SendOrdersToTMS implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
@@ -29,6 +30,13 @@ class SendOrdersToTMS implements ShouldQueue
         public IntegrationConfig $integrationConfig,
         public stdClass $order,
     ) {}
+
+    public $uniqueFor = 3600;
+
+    public function uniqueId(): string
+    {
+        return "{$this->integrationConfig->id}::{$this->order->numeropedido}::{$this->order->numeronfe}";
+    }
 
     /**
      * Execute the job.
