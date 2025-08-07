@@ -14,9 +14,33 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     public function register(): void
     {
-        // Telescope::night();
+        Telescope::night();
 
         $this->hideSensitiveRequestDetails();
+
+        Telescope::tag(function (IncomingEntry $entry) {
+            if ($entry->type === 'job') {
+                $content = $entry->content;
+
+                // Usa o data_get para acessar valores aninhados
+                $coleta = data_get($content, 'data.order.properties.coleta');
+                $depositante = data_get($content, 'data.order.properties.depositante');
+
+                $tags = [];
+
+                if ($coleta) {
+                    $tags[] = 'coleta:'.$coleta;
+                }
+
+                if ($depositante) {
+                    $tags[] = 'depositante:'.$depositante;
+                }
+
+                return $tags;
+            }
+
+            return [];
+        });
 
         $isLocal = $this->app->environment('local');
 
@@ -57,7 +81,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     {
         Gate::define('viewTelescope', function ($user) {
             return in_array($user->email, [
-                //
+                'ti.contagem@simaslog.com.br',
             ]);
         });
     }

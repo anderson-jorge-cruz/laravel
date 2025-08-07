@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,16 @@ class AppServiceProvider extends ServiceProvider
         $this->configCommands();
         $this->configUrl();
         $this->configDate();
+        $this->setupLogViewer();
+    }
+
+    public function setupLogViewer(): void
+    {
+        LogViewer::auth(function ($request) {
+            return $request->user() && in_array($request->user()->email, [
+                'ti.contagem@simaslog.com.br',
+            ]);
+        });
     }
 
     public function configModels(): void

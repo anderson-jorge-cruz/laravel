@@ -17,7 +17,7 @@ class GetAddressByDocument extends Query
         //
     }
 
-    public function handle(): Collection|stdClass
+    public function handle(): Collection|stdClass|null
     {
         $document = $this->document;
 
@@ -37,6 +37,7 @@ class GetAddressByDocument extends Query
                     ->from('WMSPRD.entidade as e2')
                     ->where('e2.cgc', $document)
                     ->where('e2.ativo', 'S')
+                    ->whereIn('e2.tipoentidade', [142, 146])
                     ->first();
             })
             ->getQuery()
