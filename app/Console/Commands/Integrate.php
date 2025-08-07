@@ -27,7 +27,7 @@ class Integrate extends Command
      */
     public function handle()
     {
-        IntegrationConfig::all()->each(function ($integration) {
+        IntegrationConfig::where('is_active', true)->each(function ($integration) {
             IntegrationProcess::dispatch([
                 'integrationConfig' => $integration,
             ]);
