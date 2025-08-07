@@ -113,7 +113,7 @@ class SendOrdersToTMS implements ShouldBeUnique, ShouldQueue
             'token' => $this->integrationConfig->production_token,
         ])->post($this->integrationConfig->endpoint, $decodedBody);
 
-        if ($response->failed() || json_decode($response->body())->entregas[0]->codMensagem == '2') {
+        if ($response->failed() || (json_decode($response->body())->entregas[0]->codMensagem == '2' && ! Str::contains(json_decode($response->body())->entregas[0]->msgRetorno, '000 - Erro Interno: duplicate key value violates unique constraint \"tbcadpes_pk\"'))) {
             Log::error("Failed to send order to TMS: {$response->status()} - {$response->body()}");
 
             return;
