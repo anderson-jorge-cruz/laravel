@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'name' => 'Anderson Jorge',
-            'email' => 'andersonjorge.ti@gmail.com',
+            'email' => 'ti.contagem@simaslog.com.br',
             'password' => 'Simaslog@2025',
         ]);
     }
