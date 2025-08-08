@@ -20,7 +20,7 @@ class ExportOrdersTask extends Task
         $ordersInDatabase = OrderExport::query()
             ->select('idromaneio')
             ->where('depositante', $this->integrationConfig->client_name)
-            ->whereCreatedAt('>=', date('Y-m-01'))
+            ->whereDate('created_at', '>=', date('Y-m-01'))
             ->pluck('idromaneio');
 
         $exportOrders = DB::connection('oracle')
