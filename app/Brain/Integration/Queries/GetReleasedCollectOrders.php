@@ -62,6 +62,7 @@ class GetReleasedCollectOrders extends Query
                     AND ROWNUM = 1
                 ) AS idnotafiscal
             ')
+            ->where('vta.embarqueliberado', 1)
             ->whereIn('vta.pedido', function ($query) use ($iddepositante) {
                 $query->selectRaw('DISTINCT ve.numpedido')
                     ->from('wmsprd.v_exportarembarquedet as ve')
