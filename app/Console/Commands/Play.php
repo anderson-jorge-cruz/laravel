@@ -28,7 +28,7 @@ class Play extends Command
     public function handle()
     {
         $query = GetReleasedCollectOrders::run(
-            IntegrationConfig::find(1)
+            IntegrationConfig::find(7)
         );
 
         dd($query);

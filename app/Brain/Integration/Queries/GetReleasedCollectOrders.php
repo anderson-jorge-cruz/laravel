@@ -67,7 +67,7 @@ class GetReleasedCollectOrders extends Query
                 $query->selectRaw('DISTINCT ve.numpedido')
                     ->from('wmsprd.v_exportarembarquedet as ve')
                     ->where('ve.iddepositante', $iddepositante)
-                    ->whereRaw("ve.dataliberacao >= TO_DATE('".date('Y-m-01')."', 'YYYY-MM-DD')");
+                    ->whereRaw("ve.dataliberacao >= TO_DATE('".date('Y-m-01', strtotime('-1month'))."', 'YYYY-MM-DD')");
             })
             ->whereNotIn('vta.notafiscal', function ($query) use ($client_document) {
                 $document = Str::remove(['.', '-', '/'], $client_document);
