@@ -80,6 +80,9 @@ class GetReleasedCollectOrders extends Query
             ->whereRaw("vta.tituloromaneio NOT LIKE '%PEIDDO DE COLETA%'")
             ->whereRaw("vta.tituloromaneio NOT LIKE '%PEDIDO COLETA%'")
             ->where('vta.depositante', 'like', "%{$client_name}%")
+            ->when($this->integrationConfig->client_name === 'ESAB INDUSTRIA E COMERCIO LTDA', function ($query) {
+                $query->esab();
+            })
             ->getQuery()
             ->get();
     }
