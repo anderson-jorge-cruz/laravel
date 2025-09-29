@@ -96,7 +96,7 @@ class SendOrdersToTMS implements ShouldBeUnique, ShouldQueue
         $decodedBody['entregas'][0]['cepEmitente'] = $this->issuerAddress->cep ?? '';
 
         // Destinatário (recipientAddress)
-        $decodedBody['entregas'][0]['cnpjCpfDes'] = Str::remove(['.', '-', '/'], $this->recipientAddress->cnpjcpfdes ?? '');
+        $decodedBody['entregas'][0]['cnpjCpfDes'] = Str::remove(['.', '-', '/'], $this->integrationConfig->client_doc) ?? '';
         $decodedBody['entregas'][0]['endDes'] = $this->recipientAddress->enddes ?? '';
         $decodedBody['entregas'][0]['numDes'] = $this->recipientAddress->numdes ?? '';
         $decodedBody['entregas'][0]['cplDes'] = $this->recipientAddress->cpldes ?? '';
